@@ -1,0 +1,144 @@
+import json
+import os
+from Track import Track
+
+# BST Node for storing tracks
+class BSTNode:
+    def __init__(self, track):
+        self.track = track
+        self.left = None
+        self.right = None
+
+class Library:
+    def __init__(self):
+        self.__root = None  # BST root
+        self.__file_path = "data/library.json"
+        self.__load_from_file()
+    
+    # Compare two tracks based on requirements
+    # Returns: -1 if t1 < t2, 0 if equal, 1 if t1 > t2
+    def __compare_tracks(self, t1, t2):
+        # First compare by title
+        if t1.get_title().lower() < t2.get_title().lower():
+            return -1
+        elif t1.get_title().lower() > t2.get_title().lower():
+            return 1
+        
+        # If titles are same, compare by artist
+        artist1 = t1.get_main_artist()
+        artist2 = t2.get_main_artist()
+        if artist1.lower() < artist2.lower():
+            return -1
+        elif artist1.lower() > artist2.lower():
+            return 1
+        
+        # If artists are same, compare by album
+        if t1.get_album().lower() < t2.get_album().lower():
+            return -1
+        elif t1.get_album().lower() > t2.get_album().lower():
+            return 1
+        
+        # If albums are same, compare by duration
+        if t1.duration_to_seconds() < t2.duration_to_seconds():
+            return -1
+        elif t1.duration_to_seconds() > t2.duration_to_seconds():
+            return 1
+        
+        return 0  # Completely equal
+    
+    # Insert track into BST
+    def __insert_recursive(self, node, track):
+        if node is None:
+            return BSTNode(track)
+        
+        comparison = self.__compare_tracks(track, node.track)
+        
+        if comparison < 0:
+            node.left = self.__insert_recursive(node.left, track)
+        elif comparison > 0:
+            node.right = self.__insert_recursive(node.right, track)
+        # If comparison == 0, track already exists (don't insert duplicate)
+        
+        return node
+    
+    # Add track to library
+    def add_track(self, track):
+        self.__root = self.__insert_recursive(self.__root, track)
+        self.__save_to_file()
+        return True
+    
+    # Get all tracks in sorted order (in-order traversal)
+    def __inorder_traversal(self, node, tracks_list):
+        if node:
+            self.__inorder_traversal(node.left, tracks_list)
+            tracks_list.append(node.track)
+            self.__inorder_traversal(node.right, tracks_list)
+    
+    def get_all_tracks(self):
+        tracks = []
+        self.__inorder_traversal(self.__root, tracks)
+        return tracks
+    
+    # Search for tracks by title (partial match)
+    def search_by_title(self, search_term):
+        all_tracks = self.get_all_tracks()
+        results = []
+        for track in all_tracks:
+            if search_term.lower() in track.get_title().lower():
+                results.append(track)
+        return results
+    
+    # Display all tracks with pagination
+    def display_library(self, page=1):
+        tracks = self.get_all_tracks()
+        if not tracks:
+            print("Library is empty!")
+            return 0
+        
+        items_per_page = 10
+        total_pages = (len(tracks) + items_per_page - 1) // items_per_page
+        
+        start_idx = (page - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, len(tracks))
+        
+        print("\n=== MUSIC LIBRARY ===")
+        for i in range(start_idx, end_idx):
+            print(f"[{i + 1}] {tracks[i].display()}")
+        
+        if total_pages > 1:
+            print(f"\n<Page {page} of {total_pages}>")
+        print()
+        
+        return total_pages
+    
+    # Save library to JSON file
+    def __save_to_file(self):
+        tracks = self.get_all_tracks()
+        data = [track.to_dict() for track in tracks]
+        
+        # Create data directory if it doesn't exist
+        os.makedirs(os.path.dirname(self.__file_path), exist_ok=True)
+        
+        with open(self.__file_path, 'w') as f:
+            json.dump(data, f, indent=4)
+    
+    # Load library from JSON file
+    def __load_from_file(self):
+        if not os.path.exists(self.__file_path):
+            return
+        
+        try:
+            with open(self.__file_path, 'r') as f:
+                data = json.load(f)
+                for track_data in data:
+                    track = Track.from_dict(track_data)
+                    self.__root = self.__insert_recursive(self.__root, track)
+        except:
+            print("Error loading library file")
+    
+    # Get track by index (for selection)
+    def get_track_by_index(self, index):
+        tracks = self.get_all_tracks()
+        if 0 <= index < len(tracks):
+            return tracks[index]
+        return None
