@@ -18,7 +18,8 @@ def library_menu():
     print("[1] Add Track")
     print("[2] View Library")
     print("[3] Search Track")
-    print("[4] Back")
+    print("[4] View Albums")
+    print("[5] Back")
 
 def playlist_menu():
     print("\n--- PLAYLISTS ---")
@@ -109,6 +110,44 @@ def handle_library():
                 print("No tracks found!")
         
         elif choice == "4":
+            # View albums
+            album_manager = library.get_album_manager()
+            page = 1
+            
+            while True:
+                total_pages = album_manager.display_albums(page)
+                if not total_pages:
+                    break
+                
+                # Show options
+                if total_pages > 1:
+                    print("[v] View album details")
+                    nav = input("Enter [n] next page, [p] previous page, [v] view details, or [b] back: ")
+                else:
+                    print("[v] View album details")
+                    nav = input("Enter [v] to view details or [b] to go back: ")
+                
+                if nav.lower() == 'n' and page < total_pages:
+                    page += 1
+                elif nav.lower() == 'p' and page > 1:
+                    page -= 1
+                elif nav.lower() == 'v':
+                    # View album details
+                    try:
+                        album_num = int(input("Enter album number: "))
+                        album = album_manager.get_album_by_index(album_num - 1)
+                        
+                        if album:
+                            album.display()
+                            input("Press Enter to continue...")
+                        else:
+                            print("Invalid album number!")
+                    except:
+                        print("Invalid input!")
+                elif nav.lower() == 'b':
+                    break
+        
+        elif choice == "5":
             break
 
 def handle_playlists():

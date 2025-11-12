@@ -1,6 +1,7 @@
 import json
 import os
 from Track import Track
+from Album import AlbumManager
 
 # BST Node for storing tracks
 class BSTNode:
@@ -13,6 +14,7 @@ class Library:
     def __init__(self):
         self.__root = None  # BST root
         self.__file_path = "data/library.json"
+        self.__album_manager = AlbumManager()  # Album manager
         self.__load_from_file()
     
     # Compare two tracks based on requirements
@@ -64,8 +66,14 @@ class Library:
     # Add track to library
     def add_track(self, track):
         self.__root = self.__insert_recursive(self.__root, track)
+        # Automatically add track to its album
+        self.__album_manager.add_track_to_album(track)
         self.__save_to_file()
         return True
+    
+    # Get album manager
+    def get_album_manager(self):
+        return self.__album_manager
     
     # Get all tracks in sorted order (in-order traversal)
     def __inorder_traversal(self, node, tracks_list):
@@ -133,6 +141,10 @@ class Library:
                 for track_data in data:
                     track = Track.from_dict(track_data)
                     self.__root = self.__insert_recursive(self.__root, track)
+            
+            # Load albums after tracks are loaded
+            all_tracks = self.get_all_tracks()
+            self.__album_manager.load_from_file(all_tracks)
         except:
             print("Error loading library file")
     
