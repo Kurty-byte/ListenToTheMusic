@@ -26,13 +26,18 @@ def playlist_menu():
     print("[1] Create Playlist")
     print("[2] View Playlists")
     print("[3] Add Track to Playlist")
-    print("[4] View Playlist Details")
-    print("[5] Create Queue from Playlist")
-    print("[6] Back")
+    print("[4] Create Queue from Playlist")
+    print("[5] Back")
 
-def queue_menu(is_repeat, is_shuffled):
+def queue_menu(is_playing, is_repeat, is_shuffled):
     print("\n--- MUSIC QUEUE ---")
-    print("[1] Play")
+    
+    # Dynamic play/pause option
+    if is_playing:
+        print("[1] Pause")
+    else:
+        print("[1] Play")
+    
     print("[2] Next")
     print("[3] Previous")
     
@@ -121,25 +126,51 @@ def handle_library():
                 
                 # Show options
                 if total_pages > 1:
-                    print("[v] View album details")
-                    nav = input("Enter [n] next page, [p] previous page, [v] view details, or [b] back: ")
+                    print("[v] View album details  |  [q] Create queue from album")
+                    nav = input("Enter [n] next, [p] prev, [v] view, [q] queue, or [b] back: ")
                 else:
-                    print("[v] View album details")
-                    nav = input("Enter [v] to view details or [b] to go back: ")
+                    print("[v] View album details  |  [q] Create queue from album")
+                    nav = input("Enter [v] view, [q] queue, or [b] back: ")
                 
                 if nav.lower() == 'n' and page < total_pages:
                     page += 1
                 elif nav.lower() == 'p' and page > 1:
                     page -= 1
+                elif nav.lower() == 'q':
+                    # Create queue from album directly
+                    try:
+                        album_num = int(input("Enter album number: "))
+                        album = album_manager.get_album_by_index(album_num - 1)
+                        
+                        if album:
+                            music_queue.clear()
+                            music_queue.load_tracks(album.get_tracks())
+                            print(f"Queue created from album '{album.get_name()}'!")
+                            input("Press Enter to continue...")
+                        else:
+                            print("Invalid album number!")
+                    except:
+                        print("Invalid input!")
                 elif nav.lower() == 'v':
-                    # View album details
+                    # View album details and options
                     try:
                         album_num = int(input("Enter album number: "))
                         album = album_manager.get_album_by_index(album_num - 1)
                         
                         if album:
                             album.display()
-                            input("Press Enter to continue...")
+                            
+                            # Show album options
+                            print("[q] Create queue from this album")
+                            print("[b] Back to albums")
+                            action = input("Enter your choice: ")
+                            
+                            if action.lower() == 'q':
+                                # Create queue from album
+                                music_queue.clear()
+                                music_queue.load_tracks(album.get_tracks())
+                                print(f"Queue created from album '{album.get_name()}'!")
+                                input("Press Enter to continue...")
                         else:
                             print("Invalid album number!")
                     except:
@@ -165,7 +196,7 @@ def handle_playlists():
                 print("Playlist name already exists!")
         
         elif choice == "2":
-            # View playlists with pagination
+            # View playlists with pagination and options
             page = 1
             while True:
                 total_pages = playlist_manager.display_playlists(page)
@@ -173,15 +204,56 @@ def handle_playlists():
                     break
                 
                 if total_pages > 1:
-                    nav = input("Enter [n] next page, [p] previous page, or [b] back: ")
-                    if nav.lower() == 'n' and page < total_pages:
-                        page += 1
-                    elif nav.lower() == 'p' and page > 1:
-                        page -= 1
-                    elif nav.lower() == 'b':
-                        break
+                    print("[v] View playlist details  |  [q] Create queue from playlist")
+                    nav = input("Enter [n] next, [p] prev, [v] view, [q] queue, or [b] back: ")
                 else:
-                    input("Press Enter to continue...")
+                    print("[v] View playlist details  |  [q] Create queue from playlist")
+                    nav = input("Enter [v] view, [q] queue, or [b] back: ")
+                
+                if nav.lower() == 'n' and page < total_pages:
+                    page += 1
+                elif nav.lower() == 'p' and page > 1:
+                    page -= 1
+                elif nav.lower() == 'q':
+                    # Create queue from playlist directly
+                    try:
+                        playlist_num = int(input("Enter playlist number: "))
+                        playlist = playlist_manager.get_playlist_by_index(playlist_num - 1)
+                        
+                        if playlist:
+                            music_queue.clear()
+                            music_queue.load_tracks(playlist.get_tracks())
+                            print(f"Queue created from playlist '{playlist.get_name()}'!")
+                            input("Press Enter to continue...")
+                        else:
+                            print("Invalid playlist number!")
+                    except:
+                        print("Invalid input!")
+                elif nav.lower() == 'v':
+                    # View playlist details
+                    try:
+                        playlist_num = int(input("Enter playlist number: "))
+                        playlist = playlist_manager.get_playlist_by_index(playlist_num - 1)
+                        
+                        if playlist:
+                            playlist.display()
+                            
+                            # Show playlist options
+                            print("[q] Create queue from this playlist")
+                            print("[b] Back to playlists")
+                            action = input("Enter your choice: ")
+                            
+                            if action.lower() == 'q':
+                                # Create queue from playlist
+                                music_queue.clear()
+                                music_queue.load_tracks(playlist.get_tracks())
+                                print(f"Queue created from playlist '{playlist.get_name()}'!")
+                                input("Press Enter to continue...")
+                        else:
+                            print("Invalid playlist number!")
+                    except:
+                        print("Invalid input!")
+                elif nav.lower() == 'b':
                     break
         
         elif choice == "3":
@@ -266,44 +338,6 @@ def handle_playlists():
                     break
         
         elif choice == "4":
-            # View playlist details - browse playlists first
-            page = 1
-            
-            # Browse playlists with pagination
-            while True:
-                total_pages = playlist_manager.display_playlists(page)
-                if not total_pages:
-                    break
-                
-                # Show options to select playlist
-                if total_pages > 1:
-                    print("[v] View playlist details")
-                    nav = input("Enter [n] next page, [p] previous page, [v] view details, or [b] back: ")
-                else:
-                    print("[v] View playlist details")
-                    nav = input("Enter [v] to view details or [b] to go back: ")
-                
-                if nav.lower() == 'n' and page < total_pages:
-                    page += 1
-                elif nav.lower() == 'p' and page > 1:
-                    page -= 1
-                elif nav.lower() == 'v':
-                    # Select playlist by number
-                    try:
-                        playlist_num = int(input("Enter playlist number: "))
-                        playlist = playlist_manager.get_playlist_by_index(playlist_num - 1)
-                        
-                        if playlist:
-                            playlist.display()
-                            input("Press Enter to continue...")
-                        else:
-                            print("Invalid playlist number!")
-                    except:
-                        print("Invalid input!")
-                elif nav.lower() == 'b':
-                    break
-        
-        elif choice == "5":
             # Create queue from playlist - browse playlists first
             page = 1
             
@@ -344,7 +378,7 @@ def handle_playlists():
                 elif nav.lower() == 'b':
                     break
         
-        elif choice == "6":
+        elif choice == "5":
             break
 
 def handle_queue():
@@ -355,13 +389,17 @@ def handle_queue():
     
     while True:
         music_queue.display(current_page)
-        queue_menu(music_queue.is_repeat_on(), music_queue.is_shuffled())
+        queue_menu(music_queue.is_playing(), music_queue.is_repeat_on(), music_queue.is_shuffled())
         choice = input("Enter choice: ")
         
         if choice == "1":
-            # Play
-            music_queue.play()
-            print("Playing...")
+            # Toggle play/pause
+            if music_queue.is_playing():
+                music_queue.pause()
+                print("Paused.")
+            else:
+                music_queue.play()
+                print("Playing...")
         
         elif choice == "2":
             # Next
