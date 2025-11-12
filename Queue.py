@@ -42,6 +42,7 @@ class MusicQueue:
     def load_tracks(self, tracks):
         for track in tracks:
             self.add_track(track)
+        self.save_state()  # Save after loading tracks
     
     # Play (resume)
     def play(self):
