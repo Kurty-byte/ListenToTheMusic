@@ -1,0 +1,32 @@
+[
+    {
+        "title": "Stairway to Heaven",
+        "artist": "Led Zeppelin",
+        "album": "Led Zeppelin IV",
+        "duration": "08:02"
+    },
+    {
+        "title": "Whole Lotta Love",
+        "artist": "Led Zeppelin",
+        "album": "Led Zeppelin II",
+        "duration": "05:34"
+    },
+    {
+        "title": "Kashmir",
+        "artist": "Led Zeppelin",
+        "album": "Physical Graffiti",
+        "duration": "08:37"
+    },
+    {
+        "title": "Immigrant Song",
+        "artist": "Led Zeppelin",
+        "album": "Led Zeppelin III",
+        "duration": "02:26"
+    },
+    {
+        "title": "Black Dog",
+        "artist": "Led Zeppelin",
+        "album": "Led Zeppelin IV",
+        "duration": "04:54"
+    }
+]

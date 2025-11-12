@@ -1,5 +1,6 @@
 import json
 import os
+import csv
 from Track import Track
 from Album import AlbumManager
 
@@ -49,27 +50,34 @@ class Library:
         return 0  # Completely equal
     
     # Insert track into BST
-    def __insert_recursive(self, node, track):
+    def __insert_recursive(self, node, track, inserted_flag):
         if node is None:
+            inserted_flag[0] = True  # Mark as inserted
             return BSTNode(track)
         
         comparison = self.__compare_tracks(track, node.track)
         
         if comparison < 0:
-            node.left = self.__insert_recursive(node.left, track)
+            node.left = self.__insert_recursive(node.left, track, inserted_flag)
         elif comparison > 0:
-            node.right = self.__insert_recursive(node.right, track)
+            node.right = self.__insert_recursive(node.right, track, inserted_flag)
         # If comparison == 0, track already exists (don't insert duplicate)
+        # inserted_flag remains False
         
         return node
     
     # Add track to library
     def add_track(self, track):
-        self.__root = self.__insert_recursive(self.__root, track)
-        # Automatically add track to its album
-        self.__album_manager.add_track_to_album(track)
-        self.__save_to_file()
-        return True
+        inserted_flag = [False]  # Use list to pass by reference
+        self.__root = self.__insert_recursive(self.__root, track, inserted_flag)
+        
+        # Only add to album and save if track was actually inserted
+        if inserted_flag[0]:
+            # Automatically add track to its album
+            self.__album_manager.add_track_to_album(track)
+            self.__save_to_file()
+        
+        return inserted_flag[0]  # Return True if inserted, False if duplicate
     
     # Get album manager
     def get_album_manager(self):
@@ -140,7 +148,8 @@ class Library:
                 data = json.load(f)
                 for track_data in data:
                     track = Track.from_dict(track_data)
-                    self.__root = self.__insert_recursive(self.__root, track)
+                    inserted_flag = [False]
+                    self.__root = self.__insert_recursive(self.__root, track, inserted_flag)
             
             # Load albums after tracks are loaded
             all_tracks = self.get_all_tracks()
@@ -154,3 +163,127 @@ class Library:
         if 0 <= index < len(tracks):
             return tracks[index]
         return None
+    
+    # Import tracks from JSON file
+    def import_from_json(self, file_path):
+        if not os.path.exists(file_path):
+            return {"success": False, "error": "File not found!"}
+        
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+            
+            imported = 0
+            skipped = 0
+            duplicates = 0
+            errors = []
+            
+            for track_data in data:
+                try:
+                    # Validate required fields
+                    if not all(key in track_data for key in ['title', 'artist', 'album', 'duration']):
+                        errors.append(f"Missing required fields in track")
+                        skipped += 1
+                        continue
+                    
+                    # Handle multiple artists (comma separated in string)
+                    artist = track_data['artist']
+                    
+                    # Create track
+                    track = Track(
+                        track_data['title'],
+                        artist,
+                        track_data['album'],
+                        track_data['duration']
+                    )
+                    
+                    # Add to library (returns False if duplicate)
+                    was_added = self.add_track(track)
+                    if was_added:
+                        imported += 1
+                    else:
+                        duplicates += 1
+                    
+                except Exception as e:
+                    errors.append(f"Error with track: {str(e)}")
+                    skipped += 1
+            
+            return {
+                "success": True,
+                "imported": imported,
+                "duplicates": duplicates,
+                "skipped": skipped,
+                "errors": errors
+            }
+            
+        except json.JSONDecodeError:
+            return {"success": False, "error": "Invalid JSON format!"}
+        except Exception as e:
+            return {"success": False, "error": f"Error reading file: {str(e)}"}
+    
+    # Import tracks from CSV file
+    def import_from_csv(self, file_path):
+        if not os.path.exists(file_path):
+            return {"success": False, "error": "File not found!"}
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                csv_reader = csv.DictReader(f)
+                
+                imported = 0
+                skipped = 0
+                duplicates = 0
+                errors = []
+                
+                for row in csv_reader:
+                    try:
+                        # Validate required fields
+                        if not all(key in row for key in ['title', 'artist', 'album', 'duration']):
+                            errors.append(f"Missing required fields in row")
+                            skipped += 1
+                            continue
+                        
+                        # Handle multiple artists (comma separated)
+                        artist = row['artist']
+                        if ',' in artist:
+                            # Split by comma and strip whitespace
+                            artist = [a.strip() for a in artist.split(',')]
+                        
+                        # Create track
+                        track = Track(
+                            row['title'].strip(),
+                            artist,
+                            row['album'].strip(),
+                            row['duration'].strip()
+                        )
+                        
+                        # Add to library (returns False if duplicate)
+                        was_added = self.add_track(track)
+                        if was_added:
+                            imported += 1
+                        else:
+                            duplicates += 1
+                        
+                    except Exception as e:
+                        errors.append(f"Error with row: {str(e)}")
+                        skipped += 1
+                
+                return {
+                    "success": True,
+                    "imported": imported,
+                    "duplicates": duplicates,
+                    "skipped": skipped,
+                    "errors": errors
+                }
+                
+        except Exception as e:
+            return {"success": False, "error": f"Error reading file: {str(e)}"}
+    
+    # Import tracks (auto-detect format)
+    def import_tracks(self, file_path):
+        if file_path.lower().endswith('.json'):
+            return self.import_from_json(file_path)
+        elif file_path.lower().endswith('.csv'):
+            return self.import_from_csv(file_path)
+        else:
+            return {"success": False, "error": "Unsupported file format! Use .json or .csv"}

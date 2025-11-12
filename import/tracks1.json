@@ -1,0 +1,32 @@
+[
+    {
+        "title": "Lose Yourself",
+        "artist": "Eminem",
+        "album": "8 Mile Soundtrack",
+        "duration": "05:26"
+    },
+    {
+        "title": "Not Afraid",
+        "artist": "Eminem",
+        "album": "Recovery",
+        "duration": "04:08"
+    },
+    {
+        "title": "Love The Way You Lie",
+        "artist": ["Eminem", "Rihanna"],
+        "album": "Recovery",
+        "duration": "04:23"
+    },
+    {
+        "title": "Stan",
+        "artist": ["Eminem", "Dido"],
+        "album": "The Marshall Mathers LP",
+        "duration": "06:44"
+    },
+    {
+        "title": "The Real Slim Shady",
+        "artist": "Eminem",
+        "album": "The Marshall Mathers LP",
+        "duration": "04:44"
+    }
+]

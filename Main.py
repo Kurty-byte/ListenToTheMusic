@@ -19,7 +19,8 @@ def library_menu():
     print("[2] View Library")
     print("[3] Search Track")
     print("[4] View Albums")
-    print("[5] Back")
+    print("[5] Import Tracks")
+    print("[6] Back")
 
 def playlist_menu():
     print("\n--- PLAYLISTS ---")
@@ -179,6 +180,42 @@ def handle_library():
                     break
         
         elif choice == "5":
+            # Import tracks
+            print("\n--- Import Tracks ---")
+            print("Place your JSON or CSV files in the 'import' directory")
+            file_name = input("Enter filename (e.g., sample_tracks.json): ")
+            
+            # Construct file path
+            file_path = f"import/{file_name}"
+            
+            print(f"\nImporting from {file_path}...")
+            result = library.import_tracks(file_path)
+            
+            if result["success"]:
+                print(f"\n✓ Successfully imported {result['imported']} tracks!")
+                
+                # Show duplicates
+                if result.get('duplicates', 0) > 0:
+                    print(f"⚠ {result['duplicates']} track(s) skipped (already exists)")
+                
+                # Show errors
+                if result['skipped'] > 0:
+                    print(f"⚠ {result['skipped']} track(s) skipped (errors)")
+                    if result['errors']:
+                        print("Errors:")
+                        for error in result['errors'][:5]:  # Show first 5 errors
+                            print(f"  - {error}")
+                
+                # Show album info
+                album_manager = library.get_album_manager()
+                total_albums = len(album_manager.get_all_albums())
+                print(f"Total albums in library: {total_albums}")
+            else:
+                print(f"\n✗ Import failed: {result['error']}")
+            
+            input("\nPress Enter to continue...")
+        
+        elif choice == "6":
             break
 
 def handle_playlists():

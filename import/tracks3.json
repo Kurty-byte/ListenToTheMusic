@@ -1,0 +1,32 @@
+[
+    {
+        "title": "Smells Like Teen Spirit",
+        "artist": "Nirvana",
+        "album": "Nevermind",
+        "duration": "05:01"
+    },
+    {
+        "title": "Come As You Are",
+        "artist": "Nirvana",
+        "album": "Nevermind",
+        "duration": "03:39"
+    },
+    {
+        "title": "Lithium",
+        "artist": "Nirvana",
+        "album": "Nevermind",
+        "duration": "04:17"
+    },
+    {
+        "title": "In Bloom",
+        "artist": "Nirvana",
+        "album": "Nevermind",
+        "duration": "04:14"
+    },
+    {
+        "title": "Heart-Shaped Box",
+        "artist": "Nirvana",
+        "album": "In Utero",
+        "duration": "04:41"
+    }
+]
