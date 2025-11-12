@@ -122,6 +122,7 @@ class MusicQueue:
             self.__size += 1
         
         # Find and set current track
+        self.__current = None  # Reset first
         if current_track:
             current = self.__head
             while current:
@@ -129,11 +130,22 @@ class MusicQueue:
                     self.__current = current
                     break
                 current = current.next
-        else:
+        
+        # If current track wasn't found, default to head
+        if not self.__current:
             self.__current = self.__head
         
         self.__is_shuffled = True
         self.save_state()
+    
+    # Helper to check if a node exists in the queue
+    def __find_node(self, target_node):
+        current = self.__head
+        while current:
+            if current == target_node:
+                return True
+            current = current.next
+        return False
     
     # Unshuffle (restore original order)
     def unshuffle(self):
@@ -160,6 +172,7 @@ class MusicQueue:
             self.__size += 1
         
         # Find and set current track
+        self.__current = None  # Reset first
         if current_track:
             current = self.__head
             while current:
@@ -167,7 +180,9 @@ class MusicQueue:
                     self.__current = current
                     break
                 current = current.next
-        else:
+        
+        # If current track wasn't found, default to head
+        if not self.__current:
             self.__current = self.__head
         
         self.__is_shuffled = False

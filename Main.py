@@ -29,13 +29,24 @@ def playlist_menu():
     print("[5] Create Queue from Playlist")
     print("[6] Back")
 
-def queue_menu():
+def queue_menu(is_repeat, is_shuffled):
     print("\n--- MUSIC QUEUE ---")
     print("[1] Play")
     print("[2] Next")
     print("[3] Previous")
-    print("[4] Turn on/off repeat")
-    print("[5] Turn on/off shuffle")
+    
+    # Dynamic repeat option
+    if is_repeat:
+        print("[4] Turn off repeat")
+    else:
+        print("[4] Turn on repeat")
+    
+    # Dynamic shuffle option
+    if is_shuffled:
+        print("[5] Turn off shuffle")
+    else:
+        print("[5] Turn on shuffle")
+    
     print("[6] Clear queue")
     print("[7] Exit queue")
 
@@ -305,7 +316,7 @@ def handle_queue():
     
     while True:
         music_queue.display(current_page)
-        queue_menu()
+        queue_menu(music_queue.is_repeat_on(), music_queue.is_shuffled())
         choice = input("Enter choice: ")
         
         if choice == "1":

@@ -68,6 +68,15 @@ class Track:
     def from_dict(data):
         return Track(data["title"], data["artist"], data["album"], data["duration"])
     
+    # Equality check for comparing tracks
+    def __eq__(self, other):
+        if not isinstance(other, Track):
+            return False
+        return (self.__title == other.__title and 
+                str(self.__artist) == str(other.__artist) and
+                self.__album == other.__album and
+                self.__duration == other.__duration)
+    
     # String representation
     def __str__(self):
         return self.display()
