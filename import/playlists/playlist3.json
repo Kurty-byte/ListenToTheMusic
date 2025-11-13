@@ -1,0 +1,25 @@
+[
+    {
+        "name": "Rock Legends",
+        "tracks": [
+            {
+                "title": "Smells Like Teen Spirit",
+                "artist": "Nirvana",
+                "album": "Nevermind",
+                "duration": "05:01"
+            },
+            {
+                "title": "Stairway to Heaven",
+                "artist": "Led Zeppelin",
+                "album": "Led Zeppelin IV",
+                "duration": "08:02"
+            },
+            {
+                "title": "Sweet Child O' Mine",
+                "artist": ["Guns N' Roses"],
+                "album": "Appetite for Destruction",
+                "duration": "05:56"
+            }
+        ]
+    }
+]

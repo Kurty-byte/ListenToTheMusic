@@ -1,0 +1,25 @@
+[
+    {
+        "name": "MJ Hits",
+        "tracks": [
+            {
+                "title": "Billie Jean",
+                "artist": "Michael Jackson",
+                "album": "Thriller",
+                "duration": "04:54"
+            },
+            {
+                "title": "Beat It",
+                "artist": "Michael Jackson",
+                "album": "Thriller",
+                "duration": "04:18"
+            },
+            {
+                "title": "Smooth Criminal",
+                "artist": "Michael Jackson",
+                "album": "Bad",
+                "duration": "04:17"
+            }
+        ]
+    }
+]

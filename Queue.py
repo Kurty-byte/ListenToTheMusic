@@ -369,3 +369,6 @@ class MusicQueue:
     
     def is_repeat_on(self):
         return self.__is_repeat
+    
+    def get_size(self):
+        return self.__size

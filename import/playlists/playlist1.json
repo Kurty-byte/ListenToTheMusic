@@ -1,0 +1,25 @@
+[
+    {
+        "name": "Eminem Classics",
+        "tracks": [
+            {
+                "title": "Lose Yourself",
+                "artist": "Eminem",
+                "album": "8 Mile Soundtrack",
+                "duration": "05:26"
+            },
+            {
+                "title": "Not Afraid",
+                "artist": "Eminem",
+                "album": "Recovery",
+                "duration": "04:08"
+            },
+            {
+                "title": "Rap God",
+                "artist": "Eminem",
+                "album": "The Marshall Mathers LP 2",
+                "duration": "06:04"
+            }
+        ]
+    }
+]

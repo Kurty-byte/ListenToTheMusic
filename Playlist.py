@@ -1,19 +1,22 @@
 import json
 import os
+from datetime import datetime
 from Track import Track
 
 # Simple linked list node for playlist tracks
 class PlaylistNode:
-    def __init__(self, track):
+    def __init__(self, track, added_at=None):
         self.track = track
         self.next = None
+        self.added_at = added_at if added_at else datetime.now()
 
 class Playlist:
-    def __init__(self, name):
+    def __init__(self, name, created_at=None):
         self.__name = name
         self.__head = None  # Linked list of tracks
         self.__track_set = set()  # Hash set for duplicate checking (stores titles)
         self.__size = 0
+        self.__created_at = created_at if created_at else datetime.now()
     
     # Getters
     def get_name(self):
@@ -21,6 +24,9 @@ class Playlist:
     
     def get_size(self):
         return self.__size
+    
+    def get_created_at(self):
+        return self.__created_at
     
     # Check if track already exists in playlist
     def __has_track(self, track):
@@ -90,26 +96,117 @@ class Playlist:
             index += 1
         print()
     
+    # Sort tracks in playlist (temporary - only in memory)
+    def sort_tracks(self, criteria="date_added"):
+        """
+        Sort tracks by given criteria.
+        criteria: "date_added", "title", "artist", "duration"
+        Uses 5-level tie-breaker: title -> artist -> album -> duration -> date
+        """
+        if self.__head is None:
+            return
+        
+        # Convert linked list to array of (track, added_at) tuples
+        tracks_with_dates = []
+        current = self.__head
+        while current:
+            tracks_with_dates.append((current.track, current.added_at))
+            current = current.next
+        
+        # Define sorting key with tie-breaker hierarchy
+        def sort_key(item):
+            track, added_at = item
+            
+            if criteria == "date_added":
+                return (
+                    added_at,
+                    track.get_title().lower(),
+                    track.get_main_artist().lower(),
+                    track.get_album().lower(),
+                    track.duration_to_seconds()
+                )
+            elif criteria == "title":
+                return (
+                    track.get_title().lower(),
+                    track.get_main_artist().lower(),
+                    track.get_album().lower(),
+                    track.duration_to_seconds(),
+                    added_at
+                )
+            elif criteria == "artist":
+                return (
+                    track.get_main_artist().lower(),
+                    track.get_title().lower(),
+                    track.get_album().lower(),
+                    track.duration_to_seconds(),
+                    added_at
+                )
+            elif criteria == "duration":
+                return (
+                    track.duration_to_seconds(),
+                    track.get_title().lower(),
+                    track.get_main_artist().lower(),
+                    track.get_album().lower(),
+                    added_at
+                )
+        
+        # Sort the array
+        tracks_with_dates.sort(key=sort_key)
+        
+        # Rebuild linked list with sorted order
+        self.__head = None
+        for track, added_at in tracks_with_dates:
+            new_node = PlaylistNode(track, added_at)
+            if self.__head is None:
+                self.__head = new_node
+            else:
+                current = self.__head
+                while current.next:
+                    current = current.next
+                current.next = new_node
+    
     # Convert to dictionary for saving
     def to_dict(self):
         tracks_data = []
         current = self.__head
         while current:
-            tracks_data.append(current.track.to_dict())
+            tracks_data.append({
+                "track": current.track.to_dict(),
+                "added_at": current.added_at.isoformat()
+            })
             current = current.next
         
         return {
             "name": self.__name,
+            "created_at": self.__created_at.isoformat(),
             "tracks": tracks_data
         }
     
     # Create playlist from dictionary
     @staticmethod
     def from_dict(data):
-        playlist = Playlist(data["name"])
-        for track_data in data["tracks"]:
-            track = Track.from_dict(track_data)
-            playlist.add_track(track)
+        created_at = datetime.fromisoformat(data["created_at"])
+        playlist = Playlist(data["name"], created_at)
+        
+        for track_item in data["tracks"]:
+            track = Track.from_dict(track_item["track"])
+            added_at = datetime.fromisoformat(track_item["added_at"])
+            
+            # Manually add to maintain timestamp
+            new_node = PlaylistNode(track, added_at)
+            track_id = track.get_title().lower() + str(track.get_artist()).lower()
+            playlist._Playlist__track_set.add(track_id)
+            
+            if playlist._Playlist__head is None:
+                playlist._Playlist__head = new_node
+            else:
+                current = playlist._Playlist__head
+                while current.next:
+                    current = current.next
+                current.next = new_node
+            
+            playlist._Playlist__size += 1
+        
         return playlist
 
 # Playlist Manager to handle multiple playlists
@@ -137,22 +234,57 @@ class PlaylistManager:
     def get_playlist_names(self):
         return list(self.__playlists.keys())
     
+    # Get all playlists (for sorting)
+    def get_all_playlists(self):
+        return list(self.__playlists.values())
+    
+    # Sort playlists and return sorted list
+    def sort_playlists(self, criteria="date_created"):
+        """
+        Sort playlists by given criteria and return sorted list.
+        criteria: "date_created", "name", "duration"
+        """
+        playlists = self.get_all_playlists()
+        
+        if criteria == "date_created":
+            playlists.sort(key=lambda p: p.get_created_at())
+        elif criteria == "name":
+            playlists.sort(key=lambda p: p.get_name().lower())
+        elif criteria == "duration":
+            # Sort by total seconds (calculate duration for each)
+            def get_duration_seconds(playlist):
+                total = 0
+                for track in playlist.get_tracks():
+                    total += track.duration_to_seconds()
+                return total
+            playlists.sort(key=get_duration_seconds)
+        
+        return playlists
+    
     # Display all playlists with pagination
-    def display_playlists(self, page=1):
-        names = self.get_playlist_names()
-        if not names:
+    def display_playlists(self, page=1, sorted_playlists=None):
+        """
+        Display playlists with pagination.
+        If sorted_playlists is provided, use that order instead of default.
+        """
+        if sorted_playlists is not None:
+            playlists = sorted_playlists
+        else:
+            playlists = self.get_all_playlists()
+        
+        if not playlists:
             print("No playlists created yet!")
             return
         
         items_per_page = 10
-        total_pages = (len(names) + items_per_page - 1) // items_per_page
+        total_pages = (len(playlists) + items_per_page - 1) // items_per_page
         
         start_idx = (page - 1) * items_per_page
-        end_idx = min(start_idx + items_per_page, len(names))
+        end_idx = min(start_idx + items_per_page, len(playlists))
         
         print("\n=== PLAYLISTS ===")
         for i in range(start_idx, end_idx):
-            print(f"[{i + 1}] {names[i]}")
+            print(f"[{i + 1}] {playlists[i].get_name()}")
         
         if total_pages > 1:
             print(f"\n<Page {page} of {total_pages}>")
@@ -161,10 +293,18 @@ class PlaylistManager:
         return total_pages
     
     # Get playlist by index (for selection)
-    def get_playlist_by_index(self, index):
-        names = self.get_playlist_names()
-        if 0 <= index < len(names):
-            return self.__playlists[names[index]]
+    def get_playlist_by_index(self, index, sorted_playlists=None):
+        """
+        Get playlist by index.
+        If sorted_playlists is provided, use that order instead of default.
+        """
+        if sorted_playlists is not None:
+            playlists = sorted_playlists
+        else:
+            playlists = self.get_all_playlists()
+        
+        if 0 <= index < len(playlists):
+            return playlists[index]
         return None
     
     # Add track to specific playlist
@@ -201,3 +341,129 @@ class PlaylistManager:
                     self.__playlists[playlist.get_name()] = playlist
         except:
             print("Error loading playlists file")
+    
+    # Import playlists from JSON file
+    def import_from_json(self, file_path):
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                
+                imported = 0
+                duplicates = 0
+                skipped = 0
+                errors = []
+                
+                for playlist_data in data:
+                    try:
+                        name = playlist_data["name"]
+                        
+                        # Check if playlist already exists
+                        if name in self.__playlists:
+                            duplicates += 1
+                            continue
+                        
+                        # Create new playlist
+                        playlist = self.create_playlist(name)
+                        if not playlist:
+                            skipped += 1
+                            continue
+                        
+                        # Add tracks to playlist
+                        for track_data in playlist_data["tracks"]:
+                            track = Track.from_dict(track_data)
+                            playlist.add_track(track)
+                        
+                        imported += 1
+                        
+                    except Exception as e:
+                        errors.append(f"Error with playlist: {str(e)}")
+                        skipped += 1
+                
+                self.__save_to_file()
+                
+                return {
+                    "success": True,
+                    "imported": imported,
+                    "duplicates": duplicates,
+                    "skipped": skipped,
+                    "errors": errors
+                }
+                
+        except Exception as e:
+            return {"success": False, "error": f"Error reading file: {str(e)}"}
+    
+    # Import playlists from CSV file
+    def import_from_csv(self, file_path):
+        try:
+            import csv
+            
+            with open(file_path, 'r') as f:
+                reader = csv.DictReader(f)
+                
+                imported = 0
+                duplicates = 0
+                skipped = 0
+                errors = []
+                playlists_cache = {}  # Track playlists we're building
+                
+                for row in reader:
+                    try:
+                        name = row["name"].strip()
+                        title = row["title"].strip()
+                        artist = row["artist"].strip()
+                        album = row["album"].strip()
+                        duration = row["duration"].strip()
+                        
+                        # Parse multi-artist
+                        if "," in artist and not artist.startswith('"'):
+                            artist = [a.strip() for a in artist.split(",")]
+                        
+                        # Create track
+                        track = Track(title, artist, album, duration)
+                        
+                        # Get or create playlist
+                        if name not in playlists_cache:
+                            if name in self.__playlists:
+                                # Playlist already exists, mark as duplicate
+                                playlists_cache[name] = None  # Mark as duplicate
+                                duplicates += 1
+                                continue
+                            else:
+                                playlist = self.create_playlist(name)
+                                if playlist:
+                                    playlists_cache[name] = playlist
+                                    imported += 1
+                                else:
+                                    playlists_cache[name] = None
+                                    skipped += 1
+                                    continue
+                        
+                        # Add track to playlist (if not duplicate)
+                        if playlists_cache[name] is not None:
+                            playlists_cache[name].add_track(track)
+                        
+                    except Exception as e:
+                        errors.append(f"Error with row: {str(e)}")
+                        skipped += 1
+                
+                self.__save_to_file()
+                
+                return {
+                    "success": True,
+                    "imported": imported,
+                    "duplicates": duplicates,
+                    "skipped": skipped,
+                    "errors": errors
+                }
+                
+        except Exception as e:
+            return {"success": False, "error": f"Error reading file: {str(e)}"}
+    
+    # Import playlists (auto-detect format)
+    def import_playlists(self, file_path):
+        if file_path.lower().endswith('.json'):
+            return self.import_from_json(file_path)
+        elif file_path.lower().endswith('.csv'):
+            return self.import_from_csv(file_path)
+        else:
+            return {"success": False, "error": "Unsupported file format! Use .json or .csv"}
