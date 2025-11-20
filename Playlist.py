@@ -5,12 +5,35 @@ from Track import Track
 
 # Simple linked list node for playlist tracks
 class PlaylistNode:
+    """
+    Represent a node in singly linked list for playlist.
+    
+    Each node store a track with timestamp of when it was added.
+    
+    Attributes:
+        track: The track stored in this node
+        next: Pointer to next node in playlist
+        added_at: Timestamp when track was added to playlist
+    """
     def __init__(self, track, added_at=None):
         self.track = track
         self.next = None
         self.added_at = added_at if added_at else datetime.now()
 
 class Playlist:
+    """
+    Represent a playlist with tracks in linked list.
+    
+    Playlists store tracks in order they was added.
+    It prevent duplicates and can be sorted by different criteria.
+    
+    Attributes:
+        __name: Playlist name
+        __head: First node in linked list
+        __track_set: Set for prevent duplicate tracks
+        __size: Number of track in playlist
+        __created_at: When playlist was created
+    """
     def __init__(self, name, created_at=None):
         self.__name = name
         self.__head = None  # Linked list of tracks
@@ -208,9 +231,20 @@ class Playlist:
             playlist._Playlist__size += 1
         
         return playlist
-
-# Playlist Manager to handle multiple playlists
+    
+# Playlist Manager to handle multiple playlists                                           
 class PlaylistManager:
+    """
+    Manage all playlists in the system.
+    
+    This class create, save and load playlists from files.
+    It support importing from JSON and CSV format.
+    
+    Attributes:
+        __playlists: Dictionary mapping name to playlist
+        __file_path: Path to playlists JSON file
+        __library: Reference to library for add imported tracks
+    """
     def __init__(self, library=None):
         self.__playlists = {}  # Hash map: name -> Playlist
         self.__file_path = "data/playlists.json"

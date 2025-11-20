@@ -6,12 +6,33 @@ from Album import AlbumManager
 
 # BST Node for storing tracks
 class BSTNode:
+    """
+    Represent a node in Binary Search Tree for library.
+    
+    Each node store a track and have left and right child pointers.
+    
+    Attributes:
+        track: The track stored in this node
+        left: Left child node with smaller value
+        right: Right child node with larger value
+    """
     def __init__(self, track):
         self.track = track
         self.left = None
         self.right = None
 
 class Library:
+    """
+    Manage music library using Binary Search Tree.
+    
+    This class store all tracks in sorted order and provide search.
+    It can import tracks from JSON and CSV files.
+    
+    Attributes:
+        __root: BST root node for store tracks
+        __file_path: Path to library JSON file
+        __album_manager: Manager for organize tracks into albums
+    """
     def __init__(self):
         self.__root = None  # BST root
         self.__file_path = "data/library.json"
