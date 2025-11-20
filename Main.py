@@ -60,7 +60,7 @@ def queue_menu(is_playing, is_repeat, is_shuffled):
 
 # Initialize components
 library = Library()
-playlist_manager = PlaylistManager()
+playlist_manager = PlaylistManager(library)
 music_queue = MusicQueue()
 
 def handle_library():
@@ -104,9 +104,10 @@ def handle_library():
                             track_num = int(input("Enter track number to add to queue: "))
                             track = library.get_track_by_index(track_num - 1)
                             if track:
-                                music_queue.add_track(track)
-                                music_queue.save_state()
-                                print(f"Added '{track.get_title()}' to queue!")
+                                was_added = music_queue.add_track(track)
+                                if was_added:
+                                    music_queue.save_state()
+                                    print(f"Added '{track.get_title()}' to queue!")
                                 input("Press Enter to continue...")
                             else:
                                 print("Invalid track number!")
@@ -127,9 +128,10 @@ def handle_library():
                         track_num = int(input("Enter track number to add to queue: "))
                         track = library.get_track_by_index(track_num - 1)
                         if track:
-                            music_queue.add_track(track)
-                            music_queue.save_state()
-                            print(f"Added '{track.get_title()}' to queue!")
+                            was_added = music_queue.add_track(track)
+                            if was_added:
+                                music_queue.save_state()
+                                print(f"Added '{track.get_title()}' to queue!")
                             input("Press Enter to continue...")
                         else:
                             print("Invalid track number!")
@@ -523,6 +525,7 @@ def handle_playlists():
             
             if result["success"]:
                 print(f"\n✓ Successfully imported {result['imported']} playlist(s)!")
+                print("✓ All tracks from playlists have been added to your library!")
                 
                 # Show duplicates
                 if result.get('duplicates', 0) > 0:

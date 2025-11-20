@@ -23,7 +23,14 @@ class MusicQueue:
         self.__file_path = "data/queue_state.json"
     
     # Add track to queue
-    def add_track(self, track):
+    def add_track(self, track: Track):
+        curr = self.__head
+        while curr is not None:
+            if curr.track == track:
+                print(f"Track '{track.get_title()}' by '{track.get_artist()}' is already in the queue. Skipping addition.")
+                return False  # Duplicate found
+            curr = curr.next
+
         new_node = QueueNode(track)
         
         if self.__head is None:
@@ -36,7 +43,11 @@ class MusicQueue:
             self.__tail = new_node
         
         self.__size += 1
-        self.__original_order.append(track)
+        # Only add to original_order if not shuffled
+        # If shuffled, newly added tracks stay at end and won't be in original order
+        if not self.__is_shuffled:
+            self.__original_order.append(track)
+        return True  # Successfully added
     
     # Load tracks from a list (for creating queue from playlist/library)
     def load_tracks(self, tracks):
@@ -92,6 +103,13 @@ class MusicQueue:
         if self.__is_shuffled or self.__size <= 1:
             return
         
+        # Save original order only on first shuffle (before any tracks were added while shuffled)
+        if len(self.__original_order) == 0:
+            current = self.__head
+            while current:
+                self.__original_order.append(current.track)
+                current = current.next
+        
         # Get all tracks
         tracks = []
         current = self.__head
@@ -138,15 +156,6 @@ class MusicQueue:
         self.__is_shuffled = True
         self.save_state()
     
-    # Helper to check if a node exists in the queue
-    def __find_node(self, target_node):
-        current = self.__head
-        while current:
-            if current == target_node:
-                return True
-            current = current.next
-        return False
-    
     # Unshuffle (restore original order)
     def unshuffle(self):
         if not self.__is_shuffled:
@@ -155,11 +164,20 @@ class MusicQueue:
         # Remember current track
         current_track = self.__current.track if self.__current else None
         
-        # Rebuild queue with original order
+        # Get tracks that were added during shuffle (not in original_order)
+        current = self.__head
+        new_tracks = []
+        while current:
+            if current.track not in self.__original_order:
+                new_tracks.append(current.track)
+            current = current.next
+        
+        # Rebuild queue with original order, then append newly added tracks
         self.__head = None
         self.__tail = None
         self.__size = 0
         
+        # First restore original order
         for track in self.__original_order:
             new_node = QueueNode(track)
             if self.__head is None:
@@ -170,6 +188,19 @@ class MusicQueue:
                 new_node.prev = self.__tail
                 self.__tail = new_node
             self.__size += 1
+        
+        # Then add tracks that were added during shuffle at the end
+        for track in new_tracks:
+            new_node = QueueNode(track)
+            if self.__head is None:
+                self.__head = new_node
+                self.__tail = new_node
+            else:
+                self.__tail.next = new_node
+                new_node.prev = self.__tail
+                self.__tail = new_node
+            self.__size += 1
+            self.__original_order.append(track)  # Add to original order now
         
         # Find and set current track
         self.__current = None  # Reset first
@@ -253,9 +284,10 @@ class MusicQueue:
         if self.__current:
             status = "Playing" if self.__is_playing else "Paused"
             print(f"\nCurrently {status}:")
-            print(f"    {self.__current.track.display()}")
-        
-        print("\nNext:")
+            print(f"    ► {self.__current.track.display()}")
+            print("\nUp Next:")
+        else:
+            print("\nQueue:")
         
         # Calculate page
         items_per_page = 10
@@ -263,18 +295,40 @@ class MusicQueue:
         
         # Get tracks to display
         tracks_list = []
-        current = self.__head
-        while current:
-            tracks_list.append(current)
-            current = current.next
+        if self.__current:
+            # If there's a current track, show only tracks AFTER it
+            current = self.__current.next
+            while current:
+                tracks_list.append(current)
+                current = current.next
+            
+            # If repeat is on and we've shown all after current, show from beginning to current
+            if self.__is_repeat and len(tracks_list) < items_per_page:
+                current = self.__head
+                while current and current != self.__current:
+                    tracks_list.append(current)
+                    current = current.next
+        else:
+            # No current track, show all tracks
+            current = self.__head
+            while current:
+                tracks_list.append(current)
+                current = current.next
         
-        start_idx = (page - 1) * items_per_page
-        end_idx = min(start_idx + items_per_page, self.__size)
+        # Display tracks
+        if len(tracks_list) == 0:
+            print("    (No more tracks in queue)")
+        else:
+            start_idx = (page - 1) * items_per_page
+            end_idx = min(start_idx + items_per_page, len(tracks_list))
+            
+            for i in range(start_idx, end_idx):
+                node = tracks_list[i]
+                print(f"    [{i + 1}] {node.track.display()}")
         
-        for i in range(start_idx, end_idx):
-            node = tracks_list[i]
-            marker = " -> " if node == self.__current else "    "
-            print(f"{marker}({i + 1}) {node.track.display()}")
+        # Adjust total pages calculation
+        if len(tracks_list) > 0:
+            total_pages = (len(tracks_list) + items_per_page - 1) // items_per_page
         
         print(f"\n<Page {page} of {total_pages}>")
         print()

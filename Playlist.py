@@ -211,9 +211,10 @@ class Playlist:
 
 # Playlist Manager to handle multiple playlists
 class PlaylistManager:
-    def __init__(self):
+    def __init__(self, library=None):
         self.__playlists = {}  # Hash map: name -> Playlist
         self.__file_path = "data/playlists.json"
+        self.__library = library  # Reference to Library for auto-adding tracks
         self.__load_from_file()
     
     # Create new playlist
@@ -372,6 +373,9 @@ class PlaylistManager:
                         for track_data in playlist_data["tracks"]:
                             track = Track.from_dict(track_data)
                             playlist.add_track(track)
+                            # Automatically add track to library if library reference exists
+                            if self.__library:
+                                self.__library.add_track(track)
                         
                         imported += 1
                         
@@ -441,6 +445,9 @@ class PlaylistManager:
                         # Add track to playlist (if not duplicate)
                         if playlists_cache[name] is not None:
                             playlists_cache[name].add_track(track)
+                            # Automatically add track to library if library reference exists
+                            if self.__library:
+                                self.__library.add_track(track)
                         
                     except Exception as e:
                         errors.append(f"Error with row: {str(e)}")
