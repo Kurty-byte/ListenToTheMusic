@@ -53,7 +53,7 @@ class Track:
         minutes = int(parts[0])
         seconds = int(parts[1])
         return minutes * 60 + seconds
-    
+        
     # Get main artist (for sorting when multiple artists)
     def get_main_artist(self):
         if isinstance(self.__artist, list):

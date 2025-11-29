@@ -15,10 +15,10 @@ class QueueNode:
         next: Pointer to next node in queue
         prev: Pointer to previous node in queue
     """
-    def __init__(self, track):
+    def __init__(self, track: Track):
         self.track = track
-        self.next = None
-        self.prev = None
+        self.next: Track = None
+        self.prev: Track = None
 
 class MusicQueue:
     """
@@ -84,6 +84,8 @@ class MusicQueue:
     
     # Play (resume)
     def play(self):
+        if not self.__is_repeat and self.__current == self.__tail:
+            self.__current = self.__head
         self.__is_playing = True
         self.save_state()
     
@@ -199,6 +201,7 @@ class MusicQueue:
                 new_tracks.append(current.track)
             current = current.next
         
+        # pwede ma refactor later(buhaton ug function)
         # Rebuild queue with original order, then append newly added tracks
         self.__head = None
         self.__tail = None

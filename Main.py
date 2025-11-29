@@ -82,6 +82,9 @@ def handle_library():
             
             album = input("Album: ")
             duration = input("Duration (mm:ss): ")
+            if ":" not in duration or len(duration.split(":")) != 2:
+                print("Invalid duration format! Use mm:ss")
+                continue
             
             track = Track(title, artist, album, duration)
             library.add_track(track)

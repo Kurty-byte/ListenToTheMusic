@@ -120,7 +120,7 @@ class Library:
     def search_by_title(self, search_term):
         all_tracks = self.get_all_tracks()
         results = []
-        for track in all_tracks:
+        for track in all_tracks: # change to log(n) search if needed
             if search_term.lower() in track.get_title().lower():
                 results.append(track)
         return results

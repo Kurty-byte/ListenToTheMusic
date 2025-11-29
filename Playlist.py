@@ -36,7 +36,7 @@ class Playlist:
     """
     def __init__(self, name, created_at=None):
         self.__name = name
-        self.__head = None  # Linked list of tracks
+        self.__head: PlaylistNode = None  # Linked list of tracks
         self.__track_set = set()  # Hash set for duplicate checking (stores titles)
         self.__size = 0
         self.__created_at = created_at if created_at else datetime.now()
@@ -500,7 +500,7 @@ class PlaylistManager:
         except Exception as e:
             return {"success": False, "error": f"Error reading file: {str(e)}"}
     
-    # Import playlists (auto-detect format)
+    # Import playlists (auto-detect format) 
     def import_playlists(self, file_path):
         if file_path.lower().endswith('.json'):
             return self.import_from_json(file_path)
