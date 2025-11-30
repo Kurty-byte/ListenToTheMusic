@@ -139,25 +139,35 @@ class MusicQueue:
                 self.__original_order.append(current.track)
                 current = current.next
         
-        # Get all tracks
-        tracks = []
+        # Split tracks into: before current, current, and after current
+        before_current = []
+        after_current = []
+        
         current = self.__head
+        found_current = False
+        
         while current:
-            tracks.append(current.track)
+            if not found_current and current != self.__current:
+                before_current.append(current.track)
+            elif current == self.__current:
+                found_current = True
+            elif found_current:
+                after_current.append(current.track)
             current = current.next
         
         # Remember current track
         current_track = self.__current.track if self.__current else None
         
-        # Shuffle
-        random.shuffle(tracks)
+        # Only shuffle tracks after current
+        random.shuffle(after_current)
         
-        # Rebuild queue
+        # Rebuild queue: before + current + shuffled_after
         self.__head = None
         self.__tail = None
         self.__size = 0
         
-        for track in tracks:
+        # Add tracks before current
+        for track in before_current:
             new_node = QueueNode(track)
             if self.__head is None:
                 self.__head = new_node
@@ -168,17 +178,33 @@ class MusicQueue:
                 self.__tail = new_node
             self.__size += 1
         
-        # Find and set current track
-        self.__current = None  # Reset first
+        # Add current track
         if current_track:
-            current = self.__head
-            while current:
-                if current.track == current_track:
-                    self.__current = current
-                    break
-                current = current.next
+            new_node = QueueNode(current_track)
+            if self.__head is None:
+                self.__head = new_node
+                self.__tail = new_node
+                self.__current = new_node
+            else:
+                self.__tail.next = new_node
+                new_node.prev = self.__tail
+                self.__tail = new_node
+                self.__current = new_node
+            self.__size += 1
         
-        # If current track wasn't found, default to head
+        # Add shuffled tracks after current
+        for track in after_current:
+            new_node = QueueNode(track)
+            if self.__head is None:
+                self.__head = new_node
+                self.__tail = new_node
+            else:
+                self.__tail.next = new_node
+                new_node.prev = self.__tail
+                self.__tail = new_node
+            self.__size += 1
+        
+        # If no current track was found, default to head
         if not self.__current:
             self.__current = self.__head
         
