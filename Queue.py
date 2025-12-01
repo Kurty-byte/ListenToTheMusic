@@ -281,6 +281,56 @@ class MusicQueue:
         self.save_state()
         return self.__is_repeat
     
+    # Remove track from queue by index (1-based)
+    def remove_track(self, index):
+        if index < 1 or index > self.__size:
+            return False
+        
+        # Find the node at the given index
+        current = self.__head
+        for i in range(1, index):
+            current = current.next
+        
+        # Track to remove
+        track_to_remove = current.track
+        
+        # Handle removal based on position
+        if self.__size == 1:
+            # Only one track - clear everything
+            self.__head = None
+            self.__tail = None
+            self.__current = None
+        elif current == self.__head:
+            # Remove head
+            self.__head = current.next
+            self.__head.prev = None
+            # If removing current, move to next
+            if current == self.__current:
+                self.__current = self.__head
+        elif current == self.__tail:
+            # Remove tail
+            self.__tail = current.prev
+            self.__tail.next = None
+            # If removing current (at tail), move to previous
+            if current == self.__current:
+                self.__current = self.__tail
+        else:
+            # Remove middle node
+            current.prev.next = current.next
+            current.next.prev = current.prev
+            # If removing current, move to next
+            if current == self.__current:
+                self.__current = current.next
+        
+        self.__size -= 1
+        
+        # Remove from original_order if present
+        if track_to_remove in self.__original_order:
+            self.__original_order.remove(track_to_remove)
+        
+        self.save_state()
+        return True
+    
     # Clear queue
     def clear(self):
         self.__head = None
@@ -323,6 +373,40 @@ class MusicQueue:
             current = current.next
         
         return (count // 10) + 1
+    
+    # Display all tracks in queue (for dequeue selection)
+    def display_all_tracks(self, page=1):
+        if self.__size == 0:
+            print("Queue is empty!")
+            return 0
+        
+        print("\n=== ALL TRACKS IN QUEUE ===")
+        print(f"Total tracks: {self.__size}")
+        print(f"Total Duration: {self.get_total_duration()}")
+        
+        items_per_page = 10
+        total_pages = (self.__size + items_per_page - 1) // items_per_page
+        
+        # Get all tracks
+        all_tracks = []
+        current = self.__head
+        while current:
+            all_tracks.append(current)
+            current = current.next
+        
+        # Calculate pagination
+        start_idx = (page - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, len(all_tracks))
+        
+        # Display tracks
+        print("\nTracks:")
+        for i in range(start_idx, end_idx):
+            node = all_tracks[i]
+            status = " ◄ CURRENT" if node == self.__current else ""
+            print(f"    [{i + 1}] {node.track.display()}{status}")
+        
+        print(f"\n<Page {page} of {total_pages}>")
+        return total_pages
     
     # Display queue (first 10 tracks)
     def display(self, page=1):

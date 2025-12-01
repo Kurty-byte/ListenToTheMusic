@@ -55,8 +55,9 @@ def queue_menu(is_playing, is_repeat, is_shuffled):
     else:
         print("[5] Turn on shuffle")
     
-    print("[6] Clear queue")
-    print("[7] Exit queue")
+    print("[6] Dequeue track")
+    print("[7] Clear queue")
+    print("[8] Exit queue")
 
 # Initialize components
 library = Library()
@@ -598,13 +599,60 @@ def handle_queue():
                 print("Shuffle turned ON")
         
         elif choice == "6":
+            # Dequeue track
+            if music_queue.get_size() == 0:
+                print("Queue is empty!")
+            else:
+                # Show all tracks with pagination
+                page = 1
+                while True:
+                    total_pages = music_queue.display_all_tracks(page)
+                    
+                    if total_pages == 0:
+                        break
+                    
+                    # Show navigation options
+                    if total_pages > 1:
+                        print("[n] Next  |  [p] Previous  |  [r] Remove track  |  [b] Back")
+                        nav = input("Enter choice: ")
+                    else:
+                        print("[r] Remove track  |  [b] Back")
+                        nav = input("Enter choice: ")
+                    
+                    if nav.lower() == 'n' and page < total_pages:
+                        page += 1
+                    elif nav.lower() == 'p' and page > 1:
+                        page -= 1
+                    elif nav.lower() == 'r':
+                        try:
+                            track_num = int(input("Enter track number to remove: "))
+                            if music_queue.remove_track(track_num):
+                                print("Track removed from queue!")
+                                input("Press Enter to continue...")
+                                # Refresh display
+                                if music_queue.get_size() == 0:
+                                    break
+                                # Adjust page if needed
+                                total_pages = (music_queue.get_size() + 9) // 10
+                                if page > total_pages:
+                                    page = total_pages
+                            else:
+                                print("Invalid track number!")
+                                input("Press Enter to continue...")
+                        except ValueError:
+                            print("Invalid input!")
+                            input("Press Enter to continue...")
+                    elif nav.lower() == 'b':
+                        break
+        
+        elif choice == "7":
             # Clear queue
             confirm = input("Clear queue? (y/n): ")
             if confirm.lower() == 'y':
                 music_queue.clear()
                 print("Queue cleared!")
         
-        elif choice == "7":
+        elif choice == "8":
             # Exit queue (saves state automatically)
             break
 

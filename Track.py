@@ -49,10 +49,15 @@ class Track:
     
     # Convert duration to seconds for calculations
     def duration_to_seconds(self):
-        parts = self.__duration.split(":")
-        minutes = int(parts[0])
-        seconds = int(parts[1])
-        return minutes * 60 + seconds
+        try:
+            parts = self.__duration.split(":")
+            if len(parts) != 2:
+                return 0  # Invalid format, return 0
+            minutes = int(parts[0])
+            seconds = int(parts[1])
+            return minutes * 60 + seconds
+        except (ValueError, IndexError):
+            return 0  # Handle invalid duration format
         
     # Get main artist (for sorting when multiple artists)
     def get_main_artist(self):
